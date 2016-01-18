@@ -61,8 +61,9 @@ the contents of c
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo: Course.FileIO#main"
+main = getArgs >>= pure . head >>= readFile >>= run
+  where head (x :. _) = x
+        head Nil      = "error: empty argument!"
 
 type FilePath =
   Chars
@@ -71,31 +72,27 @@ type FilePath =
 run ::
   Chars
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run c = getFiles (lines c) >>= printFiles
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+getFiles Nil       = pure Nil
+getFiles (f :. fs) = (:.) <$> getFile f <*> getFiles fs
 
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile fn = readFile fn >>= \c -> pure (fn, c)
 
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles Nil           = pure ()
+printFiles ((f,c) :. fs) = printFile f c >>= \_ -> printFiles fs
 
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
-
+printFile f c = putStrLn ("============ " ++ f) >>= \_ -> putStrLn c
