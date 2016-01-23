@@ -175,7 +175,7 @@ distinct' ::
   List a
   -> List a
 distinct' l = eval' (filtering p l) S.empty
-  where p a = StateT $ \s -> pure (not $ S.member a s, S.insert a s)
+  where p a = StateT $ \s -> pure (S.notMember a s, S.insert a s)
 
 -- | Remove all duplicate elements in a `List`.
 -- However, if you see a value greater than `100` in the list,
@@ -195,7 +195,7 @@ distinctF ::
 distinctF l = evalT (filtering p l) S.empty
   where p a = StateT $ \s -> if a > 100
                              then Empty
-                             else Full (not $ S.member a s, S.insert a s)
+                             else Full (S.notMember a s, S.insert a s)
 
 -- | An `OptionalT` is a functor of an `Optional` value.
 data OptionalT f a =
@@ -292,5 +292,5 @@ distinctG l = runOptionalT $ evalT (filtering p l) S.empty
   where f s a | a > 100   = OptionalT $ log1 ((listh "aborting > 100: ") ++ (show' a)) Empty
               | even a    = OptionalT $ log1 ((listh "even number: ") ++ (show' a)) (Full s')
               | otherwise = pure s'
-              where s' = (not $ S.member a s, S.insert a s)
+              where s' = (S.notMember a s, S.insert a s)
         p a = StateT $ \s -> f s a
