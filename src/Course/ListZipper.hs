@@ -297,9 +297,8 @@ moveLeftLoop ::
   ListZipper a
   -> ListZipper a
 moveLeftLoop (ListZipper (l :. ls) a r) = ListZipper ls l (a :. r)
-moveLeftLoop l@(ListZipper Nil _ Nil)   = l
-moveLeftLoop (ListZipper Nil a r)       = let x :. xs = reverse r
-                                          in ListZipper (xs ++ (a :. Nil)) x Nil
+moveLeftLoop (ListZipper Nil a r)       = let x :. xs = reverse (a :. r)
+                                          in ListZipper xs x Nil
 
 -- | Move the zipper right, or if there are no elements to the right, go to the far left.
 --
@@ -312,9 +311,8 @@ moveRightLoop ::
   ListZipper a
   -> ListZipper a
 moveRightLoop (ListZipper l a (r :. rs)) = ListZipper (a :. l) r rs
-moveRightLoop l@(ListZipper Nil _ Nil)   = l
-moveRightLoop (ListZipper l a Nil)       = let x :. xs = reverse l
-                                           in ListZipper Nil x (xs ++ (a :. Nil))
+moveRightLoop (ListZipper l a Nil)       = let x :. xs = reverse (a :. l)
+                                           in ListZipper Nil x xs
 
 -- | Move the zipper one position to the left.
 --
@@ -614,8 +612,8 @@ instance Applicative ListZipper where
 -- /Tip:/ Use @List#repeat@.
   pure a = ListZipper (repeat a) a (repeat a)
 -- /Tip:/ Use `zipWith`
-  ListZipper f g h <*> ListZipper l x r
-    = ListZipper (zipWith ($) f l) (g x) (zipWith ($) h r)
+  ListZipper f g h <*> ListZipper l x r =
+    ListZipper (zipWith ($) f l) (g x) (zipWith ($) h r)
 
 -- | Implement the `Applicative` instance for `MaybeListZipper`.
 --
@@ -655,7 +653,6 @@ instance Extend ListZipper where
     where f' (IsZ x) = Full (f x, x)
           f' IsNotZ  = Empty
 
-
 -- | Implement the `Extend` instance for `MaybeListZipper`.
 -- This instance will use the `Extend` instance for `ListZipper`.
 --
@@ -687,7 +684,8 @@ instance Comonad ListZipper where
 -- >>> traverse id (zipper [Full 1, Full 2, Full 3] (Full 4) [Empty, Full 6, Full 7])
 -- Empty
 instance Traversable ListZipper where
-  traverse f (ListZipper l x r) = ListZipper <$> (traverse f l) <*> (f x) <*> (traverse f r)
+  traverse f (ListZipper l x r) =
+    (ListZipper . reverse) <$> (traverse f (reverse l)) <*> f x <*> (traverse f r)
 
 -- | Implement the `Traversable` instance for `MaybeListZipper`.
 --
