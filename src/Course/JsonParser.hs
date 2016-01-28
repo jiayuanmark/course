@@ -159,7 +159,7 @@ jsonNumber = P $ \s -> case (readFloats s) of
 -- True
 jsonTrue ::
   Parser Chars
-jsonTrue = stringTok (listh "true")
+jsonTrue = stringTok "true"
 
 -- | Parse a JSON false literal.
 --
@@ -172,7 +172,7 @@ jsonTrue = stringTok (listh "true")
 -- True
 jsonFalse ::
   Parser Chars
-jsonFalse = stringTok (listh "false")
+jsonFalse = stringTok "false"
 
 -- | Parse a JSON null literal.
 --
@@ -185,7 +185,7 @@ jsonFalse = stringTok (listh "false")
 -- True
 jsonNull ::
   Parser Chars
-jsonNull = stringTok (listh "null")
+jsonNull = stringTok "null"
 
 -- | Parse a JSON array.
 --
