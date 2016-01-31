@@ -323,5 +323,83 @@ fromChar _ =
 dollars ::
   Chars
   -> Chars
-dollars =
-  error "todo: Course.Cheque#dollars"
+dollars text =
+  let dol = parseDollar dollar
+      cnt = parseCent cent
+  in dol ++ " and " ++ cnt
+  where (d, c) = break (== '.') text
+        dollar = listOptional fromChar d
+        cent   = listOptional fromChar c
+
+showDigit3 ::
+  Digit3
+  -> Chars
+showDigit3 (D1 d)
+  | d == Zero  = Nil
+  | otherwise  = showDigit d
+showDigit3 (D3 d1 d2 d3)
+  | d1 == Zero = showDigit3 (D2 d2 d3)
+  | otherwise  = showDigit d1 ++ " hundred" ++
+                 case showDigit3 (D2 d2 d3) of
+                   Nil -> Nil
+                   s   -> " and " ++ s
+showDigit3 (D2 d1 d2)
+  | d1 == Zero = showDigit3 (D1 d2)
+  | d1 == One  = case d2 of
+    Zero  -> "ten"
+    One   -> "eleven"
+    Two   -> "twelve"
+    Three -> "thirteen"
+    Four  -> "fourteen"
+    Five  -> "fifteen"
+    Six   -> "sixteen"
+    Seven -> "seventeen"
+    Eight -> "eighteen"
+    Nine  -> "nineteen"
+  | d1 == Two   = "twenty" ++ append d2
+  | d1 == Three = "thirty" ++ append d2
+  | d1 == Four  = "forty" ++ append d2
+  | d1 == Five  = "fifty" ++ append d2
+  | d1 == Six   = "sixty" ++ append d2
+  | d1 == Seven = "seventy" ++ append d2
+  | d1 == Eight = "eighty" ++ append d2
+  | otherwise   = "ninety" ++ append d2
+  where append d = case showDigit3 (D1 d) of
+                    Nil -> Nil
+                    s   -> '-' :. s
+
+parseDollar ::
+  List Digit
+  -> Chars
+parseDollar l =
+  let g       = group (reverse l)
+      c Nil _ = Nil
+      c x Nil = x
+      c x y   = x ++ ' ' :. y
+      joined  = joinBy ' ' . reverse . filter (/= Nil) $ zipWith c g illion
+  in case joined of
+    Nil -> "zero dollars"
+    j   | j == "one" -> j ++ " dollar"
+        | otherwise  -> j ++ " dollars"
+  where group (d1 :. d2 :. d3 :. ds) = showDigit3 (D3 d3 d2 d1) :. group ds
+        group (d1 :. d2 :. ds)       = showDigit3 (D2 d2 d1) :. group ds
+        group (d1 :. ds)             = showDigit3 (D1 d1) :. group ds
+        group Nil                    = Nil
+        joinBy _ Nil                 = Nil
+        joinBy _ (a :. Nil)          = a
+        joinBy c (a :. as)           = a ++ c :. joinBy c as
+
+parseCent ::
+  List Digit
+  -> Chars
+parseCent (d1 :. d2 :. _) = parseCent' $ showDigit3 (D2 d1 d2)
+parseCent (d1 :. _)       = parseCent' $ showDigit3 (D2 d1 Zero)
+parseCent _               = "zero cents"
+
+parseCent' ::
+  Chars
+  -> Chars
+parseCent' cent
+  | cent == Nil   = "zero cents"
+  | cent == "one" = "one cent"
+  | otherwise     = cent ++ " cents"
